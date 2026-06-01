@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>德丰彩印包装厂 - 在线报价系统</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            min-height: 100vh;
+            padding: 20px;
+            font-size: 16px;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #3498db;
+            position: relative;
+        }
+        .card-title::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: #3498db;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .form-item {
+            flex: 1;
+            min-width: 220px;
+        }
+        label {
+            display: block;
+            font-size: 15px;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: white;
+            transition: all 0.3s;
+        }
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .price-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        .price-table th, .price-table td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .price-table th {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-weight: 600;
+            color: #495057;
+        }
+        .price-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        .total-row {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .total-row td {
+            color: #d6336c;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #2471a3 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .company-info {
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        .company-info h3 {
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+        .company-info p {
+            font-size: 16px;
+            margin-bottom: 8px;
+            opacity: 0.95;
+        }
+        .material-info {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+        .price-hint {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px 16px;
+            margin-top: 16px;
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+            color: #1976d2;
+        }
+        .quick-calc {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .quick-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            background-color: #e9ecef;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .quick-btn:hover {
+            background-color: #3498db;
+            color: white;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+                font-size: 15px;
+            }
+            .form-row {
+                flex-direction: column;
+            }
+            .form-item {
+                min-width: 100%;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .price-table th, .price-table td {
+                padding: 10px 8px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>德丰彩印包装厂</h1>
+            <p>专业纸箱定制 · 在线报价系统</p>
+        </div>
+
+        <div class="card">
+            <div class="card-title">产品信息</div>
+            <div class="form-row">
+                <div class="form-item">
+                    <label>纸箱长度 (mm)</label>
+                    <input type="number" id="length" min="1" value="300" oninput="calculatePrice()">
+                </div>
+                <div class="form-item">
+                    <label>纸箱宽度 (mm)</label>
+                    <input type="number" id="width" min="1" value="200" oninput="calculatePrice()">
+                </div>
+                <div class="form-item">
+                    <label>纸箱高度 (mm)</label>
+                    <input type="number" id="height" min="1" value="150" oninput="calculatePrice()">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-item">
+                    <label>材质选择</label>
+                    <select id="material" onchange="calculatePrice()">
+                        <option value="K=K">K=K (优质双瓦楞)</option>
+                        <option value="K=A">K=A (面K里A)</option>
+                        <option value="A=A">A=A (双A瓦楞)</option>
+                        <option value="A=B">A=B (面A里B)</option>
+                        <option value="B=B">B=B (双B瓦楞)</option>
+                        <option value="B=C">B=C (面B里C)</option>
+                        <option value="C=C">C=C (双C瓦楞)</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>订购数量 (个)</label>
+                    <input type="number" id="quantity" min="1" value="1000" oninput="calculatePrice()">
+                    <div class="quick-calc">
+                        <button class="quick-btn" onclick="setQuantity(500)">500</button>
+                        <button class="quick-btn" onclick="setQuantity(1000)">1000</button>
+                        <button class="quick-btn" onclick="setQuantity(2000)">2000</button>
+                        <button class="quick-btn" onclick="setQuantity(5000)">5000</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">印刷与工艺</div>
+            <div class="form-row">
+                <div class="form-item">
+                    <label>印刷颜色</label>
+                    <select id="printColor" onchange="calculatePrice()">
+                        <option value="0">无印刷 (空白)</option>
+                        <option value="1">1色印刷</option>
+                        <option value="2">2色印刷</option>
+                        <option value="3">3色印刷</option>
+                        <option value="4">4色印刷</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>表面处理</label>
+                    <select id="surface" onchange="calculatePrice()">
+                        <option value="none">无处理</option>
+                        <option value="film">覆膜</option>
+                        <option value="uv">UV上光</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>是否模切</label>
+                    <select id="dieCut" onchange="calculatePrice()">
+                        <option value="no">不需要</option>
+                        <option value="yes">需要</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-item">
+                    <label>是否打样</label>
+                    <select id="sample" onchange="calculatePrice()">
+                        <option value="no">不需要</option>
+                        <option value="yes">需要 (100元)</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>是否加急</label>
+                    <select id="urgent" onchange="calculatePrice()">
+                        <option value="no">正常交期</option>
+                        <option value="yes">加急 (加价15%)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">价格明细</div>
+            <table class="price-table" id="priceTable">
+                <thead>
+                    <tr>
+                        <th>项目</th>
+                        <th>计算说明</th>
+                        <th>金额 (元)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>材料费用</td>
+                        <td id="materialDesc">-</td>
+                        <td id="materialCost">-</td>
+                    </tr>
+                    <tr>
+                        <td>印刷费用</td>
+                        <td id="printDesc">-</td>
+                        <td id="printCost">-</td>
+                    </tr>
+                    <tr>
+                        <td>表面处理</td>
+                        <td id="surfaceDesc">-</td>
+                        <td id="surfaceCost">-</td>
+                    </tr>
+                    <tr>
+                        <td>模切费用</td>
+                        <td id="dieCutDesc">-</td>
+                        <td id="dieCutCost">-</td>
+                    </tr>
+                    <tr>
+                        <td>打样费用</td>
+                        <td id="sampleDesc">-</td>
+                        <td id="sampleCost">-</td>
+                    </tr>
+                    <tr>
+                        <td>加急费用</td>
+                        <td id="urgentDesc">-</td>
+                        <td id="urgentCost">-</td>
+                    </tr>
+                    <tr>
+                        <td>其他杂费</td>
+                        <td id="otherDesc">-</td>
+                        <td id="otherCost">-</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="2">总计金额</td>
+                        <td id="totalCost">-</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">单价 (元/个)</td>
+                        <td id="unitPrice">-</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="price-hint">
+                <strong>备注：</strong>以上报价不含税，不含运费，报价有效期7天，最终解释权归德丰彩印包装厂所有。
+            </div>
+        </div>
+
+        <button class="btn" onclick="generatePDF()">生成PDF报价单</button>
+
+        <div class="company-info">
+            <h3>德丰彩印包装厂</h3>
+            <p>专业生产各类纸箱、彩盒、礼品盒等包装产品</p>
+            <p>联系电话：138xxxx8333</p>
+            <p>地址：江西省九江市德安县宝塔工业园区厚德南路2号</p>
+        </div>
+    </div>
+
+    <script>
+        const materialPrices = {
+            "K=K": 4.2,
+            "K=A": 3.8,
+            "A=A": 3.5,
+            "A=B": 3.2,
+            "B=B": 2.8,
+            "B=C": 2.5,
+            "C=C": 2.2
+        };
+
+        const printPrices = {
+            "0": 0,
+            "1": 0.15,
+            "2": 0.25,
+            "3": 0.35,
+            "4": 0.45
+        };
+
+        const surfacePrices = {
+            "none": 0,
+            "film": 0.12,
+            "uv": 0.08
+        };
+
+        const dieCutPrice = 0.08;
+        const samplePrice = 100;
+
+        function setQuantity(qty) {
+            document.getElementById('quantity').value = qty;
+            calculatePrice();
+        }
+
+        function calculatePrice() {
+            const length = parseFloat(document.getElementById('length').value) || 0;
+            const width = parseFloat(document.getElementById('width').value) || 0;
+            const height = parseFloat(document.getElementById('height').value) || 0;
+            const material = document.getElementById('material').value;
+            const quantity = parseInt(document.getElementById('quantity').value) || 0;
+            const printColor = document.getElementById('printColor').value;
+            const surface = document.getElementById('surface').value;
+            const dieCut = document.getElementById('dieCut').value;
+            const sample = document.getElementById('sample').value;
+            const urgent = document.getElementById('urgent').value;
+
+            if (length <= 0 || width <= 0 || height <= 0 || quantity <= 0) {
+                document.getElementById('materialDesc').textContent = '-';
+                document.getElementById('materialCost').textContent = '-';
+                document.getElementById('printDesc').textContent = '-';
+                document.getElementById('printCost').textContent = '-';
+                document.getElementById('surfaceDesc').textContent = '-';
+                document.getElementById('surfaceCost').textContent = '-';
+                document.getElementById('dieCutDesc').textContent = '-';
+                document.getElementById('dieCutCost').textContent = '-';
+                document.getElementById('sampleDesc').textContent = '-';
+                document.getElementById('sampleCost').textContent = '-';
+                document.getElementById('urgentDesc').textContent = '-';
+                document.getElementById('urgentCost').textContent = '-';
+                document.getElementById('otherDesc').textContent = '-';
+                document.getElementById('otherCost').textContent = '-';
+                document.getElementById('totalCost').textContent = '-';
+                document.getElementById('unitPrice').textContent = '-';
+                return;
+            }
+
+            const area = (2 * (length * width + length * height + width * height)) / 1000000;
+            const materialCost = area * materialPrices[material] * quantity;
+            const printCost = printPrices[printColor] * quantity;
+            const surfaceCost = surfacePrices[surface] * quantity;
+            const dieCutCost = (dieCut === 'yes') ? dieCutPrice * quantity : 0;
+            const sampleCost = (sample === 'yes') ? samplePrice : 0;
+            const baseSubtotal = materialCost + printCost + surfaceCost + dieCutCost + sampleCost;
+            const urgentCost = (urgent === 'yes') ? baseSubtotal * 0.15 : 0;
+            const otherCost = Math.round(materialCost * 0.02);
+            
+            const totalCost = baseSubtotal + urgentCost + otherCost;
+            const unitPrice = totalCost / quantity;
+
+            document.getElementById('materialDesc').textContent = `${(area * 1000).toFixed(2)}㎡ × ${materialPrices[material]}元/㎡ × ${quantity}个`;
+            document.getElementById('materialCost').textContent = materialCost.toFixed(2);
+            document.getElementById('printDesc').textContent = printColor === '0' ? '空白无印刷' : `${printColor}色印刷 × ${quantity}个`;
+            document.getElementById('printCost').textContent = printCost.toFixed(2);
+            document.getElementById('surfaceDesc').textContent = surface === 'none' ? '无处理' : (surface === 'film' ? '覆膜 × ' + quantity + '个' : 'UV上光 × ' + quantity + '个');
+            document.getElementById('surfaceCost').textContent = surfaceCost.toFixed(2);
+            document.getElementById('dieCutDesc').textContent = dieCut === 'yes' ? '需要模切 × ' + quantity + '个' : '不需要';
+            document.getElementById('dieCutCost').textContent = dieCutCost.toFixed(2);
+            document.getElementById('sampleDesc').textContent = sample === 'yes' ? '打样费' : '不需要';
+            document.getElementById('sampleCost').textContent = sampleCost.toFixed(2);
+            document.getElementById('urgentDesc').textContent = urgent === 'yes' ? '加急费用 (加价15%)' : '正常交期';
+            document.getElementById('urgentCost').textContent = urgentCost.toFixed(2);
+            document.getElementById('otherDesc').textContent = '杂费(材料费用的2%)';
+            document.getElementById('otherCost').textContent = otherCost.toFixed(2);
+            document.getElementById('totalCost').textContent = totalCost.toFixed(2);
+            document.getElementById('unitPrice').textContent = unitPrice.toFixed(4);
+        }
+
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            
+            const length = parseFloat(document.getElementById('length').value) || 0;
+            const width = parseFloat(document.getElementById('width').value) || 0;
+            const height = parseFloat(document.getElementById('height').value) || 0;
+            const material = document.getElementById('material').value;
+            const quantity = parseInt(document.getElementById('quantity').value) || 0;
+            const printColor = document.getElementById('printColor').value;
+            const surface = document.getElementById('surface').value;
+            const dieCut = document.getElementById('dieCut').value;
+            const sample = document.getElementById('sample').value;
+            const urgent = document.getElementById('urgent').value;
+
+            const area = (2 * (length * width + length * height + width * height)) / 1000000;
+            const materialCost = area * materialPrices[material] * quantity;
+            const printCost = printPrices[printColor] * quantity;
+            const surfaceCost = surfacePrices[surface] * quantity;
+            const dieCutCost = (dieCut === 'yes') ? dieCutPrice * quantity : 0;
+            const sampleCost = (sample === 'yes') ? samplePrice : 0;
+            const baseSubtotal = materialCost + printCost + surfaceCost + dieCutCost + sampleCost;
+            const urgentCost = (urgent === 'yes') ? baseSubtotal * 0.15 : 0;
+            const otherCost = Math.round(materialCost * 0.02);
+            const totalCost = baseSubtotal + urgentCost + otherCost;
+            const unitPrice = totalCost / quantity;
+
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+
+            const pdfContent = `
+                <style>
+                    body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; font-size: 14px; margin: 20px; }
+                    .pdf-container { width: 210mm; margin: 0 auto; padding: 15mm; }
+                    .pdf-title { text-align: center; font-size: 24px; font-weight: bold; color: #333; margin-bottom: 15px; }
+                    .pdf-line { border-top: 1px solid #ddd; margin: 10px 0; }
+                    .info-row { margin: 12px 0; color: #555; }
+                    .section-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 10px; }
+                    .price-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                    .price-table th, .price-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+                    .price-table th { background-color: #f5f5f5; font-weight: bold; }
+                    .total-row { font-weight: bold; background-color: #fff3cd; }
+                    .total-row td { color: #d6336c; }
+                    .company-info { margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; color: #666; }
+                    .company-info h3 { font-size: 16px; margin-bottom: 8px; }
+                    .company-info p { margin: 4px 0; font-size: 12px; }
+                </style>
+                <div class="pdf-container">
+                    <div class="pdf-title">纸箱报价单</div>
+                    <div class="pdf-line"></div>
+                    <div class="info-row">客户名称：________________________</div>
+                    <div class="info-row">报价日期：${dateStr}</div>
+                    <div class="info-row">报价有效期：7天</div>
+                    <div style="height: 15px;"></div>
+                    <div class="section-title">【产品信息】</div>
+                    <div class="pdf-line"></div>
+                    <div class="info-row">规格尺寸：${length} × ${width} × ${height} mm</div>
+                    <div class="info-row">材    质：${material} (${materialPrices[material]}元/㎡)</div>
+                    <div class="info-row">订购数量：${quantity} 个</div>
+                    <div class="info-row">印刷颜色：${printColor === '0' ? '空白无印刷' : printColor + '色印刷'}</div>
+                    <div class="info-row">表面处理：${surface === 'none' ? '无处理' : (surface === 'film' ? '覆膜' : 'UV上光')}</div>
+                    <div class="info-row">是否模切：${dieCut === 'yes' ? '需要' : '不需要'}</div>
+                    <div class="info-row">是否打样：${sample === 'yes' ? '需要' : '不需要'}</div>
+                    <div class="info-row">是否加急：${urgent === 'yes' ? '是 (加价15%)' : '否'}</div>
+                    <div style="height: 15px;"></div>
+                    <div class="section-title">【价格明细】</div>
+                    <div class="pdf-line"></div>
+                    <table class="price-table">
+                        <thead>
+                            <tr><th>项目</th><th>说明</th><th style="text-align:right">金额(元)</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>材料费用</td><td>${(area * 1000).toFixed(2)}㎡ × ${materialPrices[material]}元/㎡</td><td style="text-align:right">${materialCost.toFixed(2)}</td></tr>
+                            <tr><td>印刷费用</td><td>${printColor === '0' ? '空白无印刷' : printColor + '色印刷'}</td><td style="text-align:right">${printCost.toFixed(2)}</td></tr>
+                            <tr><td>表面处理</td><td>${surface === 'none' ? '无处理' : (surface === 'film' ? '覆膜' : 'UV上光')}</td><td style="text-align:right">${surfaceCost.toFixed(2)}</td></tr>
+                            <tr><td>模切费用</td><td>${dieCut === 'yes' ? '需要模切' : '不需要'}</td><td style="text-align:right">${dieCutCost.toFixed(2)}</td></tr>
+                            <tr><td>打样费用</td><td>${sample === 'yes' ? '打样费' : '不需要'}</td><td style="text-align:right">${sampleCost.toFixed(2)}</td></tr>
+                            <tr><td>加急费用</td><td>${urgent === 'yes' ? '加急(加价15%)' : '正常交期'}</td><td style="text-align:right">${urgentCost.toFixed(2)}</td></tr>
+                            <tr><td>其他杂费</td><td>杂费(2%)</td><td style="text-align:right">${otherCost.toFixed(2)}</td></tr>
+                            <tr><td colspan="2"></td><td></td></tr>
+                            <tr class="total-row"><td colspan="2">合计金额</td><td style="text-align:right">${totalCost.toFixed(2)}</td></tr>
+                            <tr><td colspan="2">单价</td><td style="text-align:right">${unitPrice.toFixed(4)}</td></tr>
+                        </tbody>
+                    </table>
+                    <div style="height: 15px;"></div>
+                    <div class="company-info">
+                        <h3>德丰彩印包装厂</h3>
+                        <p>联系电话：138xxxx8333</p>
+                        <p>地址：江西省九江市德安县宝塔工业园区厚德南路2号</p>
+                        <p style="font-size: 11px; color: #888; margin-top: 10px;">备注：以上报价不含税，不含运费，报价有效期7天，最终解释权归本厂所有</p>
+                    </div>
+                </div>
+            `;
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = pdfContent;
+            tempDiv.style.position = 'fixed';
+            tempDiv.style.top = '-10000px';
+            tempDiv.style.left = '-10000px';
+            tempDiv.style.width = '800px';
+            document.body.appendChild(tempDiv);
+
+            try {
+                const canvas = await html2canvas(tempDiv, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 210;
+                const pageHeight = 297;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                let heightLeft = imgHeight;
+                let position = 0;
+                
+                const doc = new jsPDF('p', 'mm', 'a4');
+                
+                if (imgHeight <= pageHeight) {
+                    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                } else {
+                    while (heightLeft >= 0) {
+                        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                        position -= pageHeight;
+                        if (heightLeft > 0) {
+                            doc.addPage();
+                        }
+                    }
+                }
+                
+                doc.save(`报价单_${dateStr}.pdf`);
+            } catch (error) {
+                console.error('PDF生成失败:', error);
+                alert('PDF生成失败，请重试');
+            } finally {
+                document.body.removeChild(tempDiv);
+            }
+        }
+
+        calculatePrice();
+    </script>
+</body>
+</html>
