@@ -1,0 +1,19 @@
+{
+  "name": "carton-quote-system",
+  "version": "1.0.0",
+  "description": "德丰彩印包装厂在线纸箱报价系统",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "author": "德丰彩印包装厂",
+  "license": "MIT"
+}
