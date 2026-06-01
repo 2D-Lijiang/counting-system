@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>德丰彩印包装厂 - 在线报价系统</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -485,9 +485,8 @@
             document.getElementById('unitPrice').textContent = unitPrice.toFixed(4);
         }
 
-        function generatePDF() {
+        async function generatePDF() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
             
             const length = parseFloat(document.getElementById('length').value) || 0;
             const width = parseFloat(document.getElementById('width').value) || 0;
@@ -515,87 +514,115 @@
             const today = new Date();
             const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
 
-            doc.setLineWidth(1.5);
-            doc.rect(15, 15, 170, 260);
+            const pdfContent = `
+                <style>
+                    body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; font-size: 14px; margin: 20px; }
+                    .pdf-container { width: 210mm; margin: 0 auto; padding: 15mm; }
+                    .pdf-title { text-align: center; font-size: 24px; font-weight: bold; color: #333; margin-bottom: 15px; }
+                    .pdf-line { border-top: 1px solid #ddd; margin: 10px 0; }
+                    .info-row { margin: 12px 0; color: #555; }
+                    .section-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 10px; }
+                    .price-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                    .price-table th, .price-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+                    .price-table th { background-color: #f5f5f5; font-weight: bold; }
+                    .total-row { font-weight: bold; background-color: #fff3cd; }
+                    .total-row td { color: #d6336c; }
+                    .company-info { margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; color: #666; }
+                    .company-info h3 { font-size: 16px; margin-bottom: 8px; }
+                    .company-info p { margin: 4px 0; font-size: 12px; }
+                </style>
+                <div class="pdf-container">
+                    <div class="pdf-title">纸箱报价单</div>
+                    <div class="pdf-line"></div>
+                    <div class="info-row">客户名称：________________________</div>
+                    <div class="info-row">报价日期：${dateStr}</div>
+                    <div class="info-row">报价有效期：7天</div>
+                    <div style="height: 15px;"></div>
+                    <div class="section-title">【产品信息】</div>
+                    <div class="pdf-line"></div>
+                    <div class="info-row">规格尺寸：${length} × ${width} × ${height} mm</div>
+                    <div class="info-row">材    质：${material} (${materialPrices[material]}元/㎡)</div>
+                    <div class="info-row">订购数量：${quantity} 个</div>
+                    <div class="info-row">印刷颜色：${printColor === '0' ? '空白无印刷' : printColor + '色印刷'}</div>
+                    <div class="info-row">表面处理：${surface === 'none' ? '无处理' : (surface === 'film' ? '覆膜' : 'UV上光')}</div>
+                    <div class="info-row">是否模切：${dieCut === 'yes' ? '需要' : '不需要'}</div>
+                    <div class="info-row">是否打样：${sample === 'yes' ? '需要' : '不需要'}</div>
+                    <div class="info-row">是否加急：${urgent === 'yes' ? '是 (加价15%)' : '否'}</div>
+                    <div style="height: 15px;"></div>
+                    <div class="section-title">【价格明细】</div>
+                    <div class="pdf-line"></div>
+                    <table class="price-table">
+                        <thead>
+                            <tr><th>项目</th><th>说明</th><th style="text-align:right">金额(元)</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>材料费用</td><td>${(area * 1000).toFixed(2)}㎡ × ${materialPrices[material]}元/㎡</td><td style="text-align:right">${materialCost.toFixed(2)}</td></tr>
+                            <tr><td>印刷费用</td><td>${printColor === '0' ? '空白无印刷' : printColor + '色印刷'}</td><td style="text-align:right">${printCost.toFixed(2)}</td></tr>
+                            <tr><td>表面处理</td><td>${surface === 'none' ? '无处理' : (surface === 'film' ? '覆膜' : 'UV上光')}</td><td style="text-align:right">${surfaceCost.toFixed(2)}</td></tr>
+                            <tr><td>模切费用</td><td>${dieCut === 'yes' ? '需要模切' : '不需要'}</td><td style="text-align:right">${dieCutCost.toFixed(2)}</td></tr>
+                            <tr><td>打样费用</td><td>${sample === 'yes' ? '打样费' : '不需要'}</td><td style="text-align:right">${sampleCost.toFixed(2)}</td></tr>
+                            <tr><td>加急费用</td><td>${urgent === 'yes' ? '加急(加价15%)' : '正常交期'}</td><td style="text-align:right">${urgentCost.toFixed(2)}</td></tr>
+                            <tr><td>其他杂费</td><td>杂费(2%)</td><td style="text-align:right">${otherCost.toFixed(2)}</td></tr>
+                            <tr><td colspan="2"></td><td></td></tr>
+                            <tr class="total-row"><td colspan="2">合计金额</td><td style="text-align:right">${totalCost.toFixed(2)}</td></tr>
+                            <tr><td colspan="2">单价</td><td style="text-align:right">${unitPrice.toFixed(4)}</td></tr>
+                        </tbody>
+                    </table>
+                    <div style="height: 15px;"></div>
+                    <div class="company-info">
+                        <h3>德丰彩印包装厂</h3>
+                        <p>联系电话：138xxxx8333</p>
+                        <p>地址：浙江省温州市龙港市包装工业园区</p>
+                        <p style="font-size: 11px; color: #888; margin-top: 10px;">备注：以上报价不含税，不含运费，报价有效期7天，最终解释权归本厂所有</p>
+                    </div>
+                </div>
+            `;
 
-            doc.setFontSize(20);
-            doc.setTextColor(30, 30, 30);
-            doc.text('纸箱报价单', 90, 35, { align: 'center' });
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = pdfContent;
+            tempDiv.style.position = 'fixed';
+            tempDiv.style.top = '-10000px';
+            tempDiv.style.left = '-10000px';
+            tempDiv.style.width = '800px';
+            document.body.appendChild(tempDiv);
 
-            doc.setLineWidth(0.5);
-            doc.line(30, 40, 170, 40);
-
-            doc.setFontSize(12);
-            doc.setTextColor(60, 60, 60);
-            doc.text(`客户名称：________________________`, 25, 55);
-            doc.text(`报价日期：${dateStr}`, 25, 68);
-            doc.text(`报价有效期：7天`, 25, 81);
-
-            doc.setFontSize(14);
-            doc.setTextColor(30, 30, 30);
-            doc.text('【产品信息】', 25, 98);
-            doc.setLineWidth(0.5);
-            doc.line(25, 101, 175, 101);
-
-            doc.setFontSize(12);
-            doc.text(`规格尺寸：${length} × ${width} × ${height} mm`, 25, 115);
-            doc.text(`材    质：${material} (${materialPrices[material]}元/㎡)`, 25, 128);
-            doc.text(`订购数量：${quantity} 个`, 25, 141);
-            doc.text(`印刷颜色：${printColor === '0' ? '空白无印刷' : printColor + '色印刷'}`, 25, 154);
-            doc.text(`表面处理：${surface === 'none' ? '无处理' : (surface === 'film' ? '覆膜' : 'UV上光')}`, 25, 167);
-            doc.text(`是否模切：${dieCut === 'yes' ? '需要' : '不需要'}`, 25, 180);
-            doc.text(`是否打样：${sample === 'yes' ? '需要' : '不需要'}`, 25, 193);
-            doc.text(`是否加急：${urgent === 'yes' ? '是 (加价15%)' : '否'}`, 25, 206);
-
-            doc.setFontSize(14);
-            doc.setTextColor(30, 30, 30);
-            doc.text('【价格明细】', 25, 218);
-            doc.setLineWidth(0.5);
-            doc.line(25, 221, 175, 221);
-
-            const tableData = [
-                ['项目', '说明', '金额(元)'],
-                ['材料费用', `${(area * 1000).toFixed(2)}㎡ × ${materialPrices[material]}元/㎡`, materialCost.toFixed(2)],
-                ['印刷费用', printColor === '0' ? '空白无印刷' : printColor + '色印刷', printCost.toFixed(2)],
-                ['表面处理', surface === 'none' ? '无处理' : (surface === 'film' ? '覆膜' : 'UV上光'), surfaceCost.toFixed(2)],
-                ['模切费用', dieCut === 'yes' ? '需要模切' : '不需要', dieCutCost.toFixed(2)],
-                ['打样费用', sample === 'yes' ? '打样费' : '不需要', sampleCost.toFixed(2)],
-                ['加急费用', urgent === 'yes' ? '加急(加价15%)' : '正常交期', urgentCost.toFixed(2)],
-                ['其他杂费', '杂费(2%)', otherCost.toFixed(2)],
-                ['', '', ''],
-                ['合计金额', '', totalCost.toFixed(2)],
-                ['单价', '', unitPrice.toFixed(4)]
-            ];
-
-            doc.autoTable({
-                head: [tableData[0]],
-                body: tableData.slice(1),
-                startY: 228,
-                theme: 'grid',
-                headStyles: {
-                    fillColor: [240, 240, 240],
-                    textColor: [40, 40, 40],
-                    fontStyle: 'bold'
-                },
-                bodyStyles: {
-                    fontSize: 11
-                },
-                columnStyles: {
-                    0: { width: 45 },
-                    1: { width: 65 },
-                    2: { width: 35, halign: 'right' }
+            try {
+                const canvas = await html2canvas(tempDiv, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 210;
+                const pageHeight = 297;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                let heightLeft = imgHeight;
+                let position = 0;
+                
+                const doc = new jsPDF('p', 'mm', 'a4');
+                
+                if (imgHeight <= pageHeight) {
+                    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                } else {
+                    while (heightLeft >= 0) {
+                        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                        position -= pageHeight;
+                        if (heightLeft > 0) {
+                            doc.addPage();
+                        }
+                    }
                 }
-            });
-
-            const finalY = doc.lastAutoTable.finalY + 15;
-            doc.setFontSize(12);
-            doc.setTextColor(60, 60, 60);
-            doc.text('报价单位：德丰彩印包装厂', 25, finalY);
-            doc.text('联系电话：138xxxx8333', 25, finalY + 12);
-            doc.text('地址：浙江省温州市龙港市包装工业园区', 25, finalY + 24);
-            doc.text('备注：以上报价不含税，不含运费，最终解释权归本厂所有', 25, finalY + 36);
-
-            doc.save(`报价单_${dateStr}.pdf`);
+                
+                doc.save(`报价单_${dateStr}.pdf`);
+            } catch (error) {
+                console.error('PDF生成失败:', error);
+                alert('PDF生成失败，请重试');
+            } finally {
+                document.body.removeChild(tempDiv);
+            }
         }
 
         calculatePrice();
